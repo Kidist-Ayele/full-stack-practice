@@ -1,12 +1,21 @@
-# 🐘 PostgreSQL Basics: Relational Schema & Multi-Tenant Design
+# 🐘 PostgreSQL Basics: Beginner's Guide & Schema Design
 
-A practical guide to essential PostgreSQL relational database concepts, featuring a complete schema for a **Multi-Tenant Task Management Application** (Users, Teams, Memberships, Tasks, Comments, and Tags).
+Welcome to PostgreSQL basics! This guide breaks down relational database concepts step-by-step using a real-world mini-project: **A Multi-Tenant Task Management App** (Users, Teams, Memberships, Tasks, Comments, and Tags).
+
+Instead of putting all code in one big file, this project is split into **4 bite-sized, easy-to-read files**:
+
+| File | What it teaches |
+|---|---|
+| 📄 [`01_create_tables.sql`](./01_create_tables.sql) | DDL, Tables, UUIDs, Primary & Foreign Keys, Constraints |
+| 📄 [`02_indexes.sql`](./02_indexes.sql) | B-Tree & GIN Indexes (Making queries fast) |
+| 📄 [`03_sample_data.sql`](./03_sample_data.sql) | DML (`INSERT INTO`) with sample multi-tenant data |
+| 📄 [`04_queries.sql`](./04_queries.sql) | Practical `SELECT` & `UPDATE` queries with JOINs |
 
 ---
 
-## 🏗️ Multi-Tenant Architecture Overview
+## 🗺️ Visual Architecture (The Big Picture)
 
-In a **multi-tenant** SaaS application, multiple organizations (Teams) share the same database while keeping their data strictly isolated.
+A **multi-tenant** app means multiple organizations (Teams) share one database, but each team only sees their own data.
 
 ```
        ┌────────────────────────┐
@@ -16,7 +25,7 @@ In a **multi-tenant** SaaS application, multiple organizations (Teams) share the
            (1:N)   │   (M:N via memberships)
                    ▼
        ┌────────────────────────┐
-       │         teams          │  ◄── (The Tenant Boundary)
+       │         teams          │  ◄── Tenant Boundary
        └───────────┬────────────┘
                    │
          ┌─────────┴─────────┐
@@ -35,75 +44,61 @@ In a **multi-tenant** SaaS application, multiple organizations (Teams) share the
 
 ---
 
-## 🔑 Core Concepts & Design Principles
+## 💡 Key Concepts Explained Simply
 
 ### 1. DDL vs. DML
-* **DDL (Data Definition Language):** Defines or modifies the database structure.
-  * Keywords: `CREATE`, `ALTER`, `DROP`, `TRUNCATE`.
-  * *Example:* `CREATE TABLE tasks (...)` in [`schema.sql`](./schema.sql).
-* **DML (Data Manipulation Language):** Queries and modifies the data itself.
-  * Keywords: `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
-  * *Example:* `INSERT INTO tasks (title, status) VALUES ('Setup DB', 'in_progress');`.
+* **DDL (Data Definition Language):** Building the structure (the blueprint).
+  * Commands: `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`.
+  * *See:* [`01_create_tables.sql`](./01_create_tables.sql).
+* **DML (Data Manipulation Language):** Working with the rows inside the tables.
+  * Commands: `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
+  * *See:* [`03_sample_data.sql`](./03_sample_data.sql) & [`04_queries.sql`](./04_queries.sql).
 
 ---
 
-### 2. UUID v4 as Primary Keys
-Instead of sequential integer IDs (`SERIAL` / `BIGINT`):
+### 2. UUID v4 as IDs
+Instead of regular auto-incrementing numbers (`1, 2, 3...`), we use:
 ```sql
 id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 ```
-* **Why UUID v4?**
-  * **Security & Non-Enumerable:** Sequential IDs reveal business volume (e.g. `GET /tasks/100` tells attackers there are ~100 tasks).
-  * **Distributed Creation:** Client apps or microservices can generate unique IDs offline before inserting without database collisions.
-  * **Seamless Merging:** Sharding and multi-region database replication without ID collision headaches.
+* **Why?** Numbers are easily guessable (someone can try `/tasks/1`, `/tasks/2`). UUIDs are long random strings (`11111111-1111-4111-8111-111111111111`) that are secure and globally unique.
 
 ---
 
-### 3. Primary & Foreign Keys (Referential Actions)
-Foreign keys enforce data integrity across tables with specific deletion behaviors:
-
-| Action | Behavior | Where We Used It |
-|---|---|---|
-| **`ON DELETE CASCADE`** | Automatically deletes child records when parent is deleted. | `comments` deleted when parent `task` is removed; `task_tags` deleted when `task` or `tag` is removed. |
-| **`ON DELETE SET NULL`** | Preserves child records but clears the reference. | If an assigned user is deleted, `tasks.assignee_id` becomes `NULL` (task remains intact). |
-| **`ON DELETE RESTRICT`** | Blocks deletion if related records exist. | Prevents deleting a user who originally created active `tasks`. |
+### 3. Primary Keys & Foreign Keys
+* **Primary Key (`PRIMARY KEY`):** The unique identifier for each row in a table.
+* **Foreign Key (`REFERENCES ...`):** Connects a row in one table to a row in another table.
+  * **`ON DELETE CASCADE`:** If the parent is deleted, automatically delete the children. (e.g. deleting a task deletes its comments).
+  * **`ON DELETE SET NULL`:** If the parent is deleted, keep the record but set the link to empty. (e.g. if an assigned user deletes their account, the task remains with no assignee).
+  * **`ON DELETE RESTRICT`:** Block deletion if connected records exist. (e.g. you cannot delete a user if they created active tasks).
 
 ---
 
-### 4. Constraints (`CHECK`, `UNIQUE`, `NOT NULL`)
-Constraints prevent corrupt or invalid data from ever entering your database:
-
-* **`UNIQUE`:**
-  * Single column: `email VARCHAR(255) UNIQUE`
-  * Composite unique: `CONSTRAINT uq_team_user UNIQUE (team_id, user_id)` (prevents adding the same user twice to the same team).
-* **`CHECK`:**
-  * Validating state machines:
-    ```sql
-    CONSTRAINT check_task_status CHECK (status IN ('todo', 'in_progress', 'in_review', 'done', 'archived'))
-    ```
-  * Enforcing email regex or hex colors:
-    ```sql
-    CONSTRAINT check_hex_color CHECK (color_hex ~* '^#[0-9A-Fa-f]{6}$')
-    ```
+### 4. Constraints (`NOT NULL`, `UNIQUE`, `CHECK`)
+Constraints act as rules to keep your data clean:
+* **`NOT NULL`:** Column must have a value (e.g. title cannot be empty).
+* **`UNIQUE`:** No duplicates allowed (e.g. `email` or composite `UNIQUE(team_id, user_id)`).
+* **`CHECK`:** Restricts values to a specific list or condition:
+  ```sql
+  CHECK (status IN ('todo', 'in_progress', 'done'))
+  CHECK (role IN ('owner', 'admin', 'member'))
+  ```
 
 ---
 
 ### 5. Table Relationships: 1:N vs. M:N
 
 #### One-to-Many (1:N)
-A single record in Table A owns multiple records in Table B.
-* **Example:** `tasks` $\rightarrow$ `comments`.
-* **Design:** Add a Foreign Key column `task_id` in the `comments` table.
+* **Real world:** One task has many comments.
+* **Design:** Add a single foreign key `task_id` inside the `comments` table.
 
 #### Many-to-Many (M:N)
-A record in Table A can relate to multiple records in Table B, and vice-versa.
-* **Example:** `tasks` $\leftrightarrow$ `tags` (a task can have many tags; a tag can be applied to many tasks).
-* **Design:** Use an associative/junction table `task_tags` with a composite primary key:
+* **Real world:** One task has many tags, and one tag can be used on many tasks.
+* **Design:** We use a **junction table** (`task_tags`) containing two foreign keys:
   ```sql
   CREATE TABLE task_tags (
-      task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-      tag_id  UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-      assigned_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+      tag_id  UUID REFERENCES tags(id) ON DELETE CASCADE,
       PRIMARY KEY (task_id, tag_id)
   );
   ```
@@ -112,70 +107,40 @@ A record in Table A can relate to multiple records in Table B, and vice-versa.
 
 ### 6. Indexing: B-Tree vs. GIN
 
-Indexes speed up queries from slow full-table scans ($O(N)$) to fast lookups ($O(\log N)$).
+Without an index, searching for a task requires checking every single row (slow). Indexes make lookups instant:
 
-#### B-Tree Index (Default)
-Best for scalar values, equality (`=`), comparisons (`<`, `>`, `<=`), ranges (`BETWEEN`), and sorting (`ORDER BY`).
-```sql
--- Fast tenant lookups and filtering
-CREATE INDEX idx_tasks_team_id ON tasks(team_id);
-CREATE INDEX idx_tasks_status ON tasks(team_id, status);
-```
-
-#### GIN (Generalized Inverted Index)
-Best for composite items where you want to query inside values (JSONB documents, text arrays, full-text search).
-```sql
--- Enables fast search inside task metadata (e.g. metadata @> '{"device": "cloud"}')
-CREATE INDEX idx_tasks_metadata_gin ON tasks USING gin(metadata);
-```
+* **B-Tree Index (Default):** Great for numbers, text, dates, and foreign keys (`WHERE team_id = ...` or `ORDER BY due_date`).
+  ```sql
+  CREATE INDEX idx_tasks_team_id ON tasks(team_id);
+  ```
+* **GIN Index (Generalized Inverted Index):** Great for querying *inside* JSON or arrays.
+  ```sql
+  CREATE INDEX idx_tasks_metadata_gin ON tasks USING gin(metadata);
+  ```
 
 ---
 
-### 7. Automatic `created_at` & `updated_at`
-
-PostgreSQL does not update timestamps on row changes automatically. We solve this elegantly using a reusable function and trigger:
-
-```sql
--- 1. Reusable trigger function
-CREATE OR REPLACE FUNCTION update_timestamp_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- 2. Attach trigger to any table
-CREATE TRIGGER trg_tasks_updated_at
-BEFORE UPDATE ON tasks
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp_column();
-```
-Now every `UPDATE tasks SET status = 'done' WHERE id = ...;` automatically updates `updated_at` without manual app logic.
+### 7. Timestamps (`created_at`, `updated_at`)
+Every table includes:
+* `created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP`: Automatically saves the exact creation time.
+* `updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP`: Tracks when the row was last modified.
 
 ---
 
-## 🧪 Testing the Schema
+## 🧪 How to Run These Files
 
-You can execute the entire schema and seed data directly in your PostgreSQL database:
+Using the PostgreSQL database running in your `docker-practice` container:
 
 ```bash
-# Connect to your local Postgres container from docker-practice
-docker exec -i postgres_db psql -U postgres -d hospital_db < db-postgresql-basics/schema.sql
-```
+# 1. Create tables
+docker exec -i postgres_db psql -U postgres -d hospital_db < db-postgresql-basics/01_create_tables.sql
 
-Query tasks with their tags and assignee for a specific tenant:
-```sql
-SELECT 
-    t.id AS task_id,
-    t.title,
-    t.status,
-    u.full_name AS assignee,
-    COALESCE(array_agg(tg.name) FILTER (WHERE tg.name IS NOT NULL), '{}') AS tags
-FROM tasks t
-LEFT JOIN users u ON t.assignee_id = u.id
-LEFT JOIN task_tags tt ON t.id = tt.task_id
-LEFT JOIN tags tg ON tt.tag_id = tg.id
-WHERE t.team_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-GROUP BY t.id, t.title, t.status, u.full_name;
+# 2. Add indexes
+docker exec -i postgres_db psql -U postgres -d hospital_db < db-postgresql-basics/02_indexes.sql
+
+# 3. Insert sample data
+docker exec -i postgres_db psql -U postgres -d hospital_db < db-postgresql-basics/03_sample_data.sql
+
+# 4. Test queries
+docker exec -i postgres_db psql -U postgres -d hospital_db < db-postgresql-basics/04_queries.sql
 ```
