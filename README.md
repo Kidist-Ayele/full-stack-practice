@@ -8,6 +8,7 @@ A curated collection of practical full-stack engineering exercises, architecture
 
 | Module | Description | Key Tech / Concepts |
 |---|---|---|
-| [🐳 `docker-practice`](./docker-practice) | Multi-container development stack | Docker Compose, PostgreSQL 16, Hasura GraphQL, pgAdmin 4, networking, volumes |
-| [🐘 `db-postgresql-basics`](./db-postgresql-basics) | Relational database schema design & patterns | Multi-tenant task manager, DDL/DML, UUID v4, constraints, B-Tree & GIN indexes, 1:N & M:N relations |
-| [⚡ `db-postgresql-advanced`](./db-postgresql-advanced) | Queries, triggers, procedures & views | INNER/LEFT/FULL JOINs, GROUP BY, aggregations, JSONB queries, auto-updating triggers, SQL VIEW for user statistics |
+| [🎓 `minabtech-learning`](./minabtech-learning) | Structured full-stack learning roadmap | Linux Bash, Docker & Hasura, Postgres schema, GraphQL basics |
+| [🐳 `docker-practice`](./docker-practice) | Multi-container development stack | Docker Compose, PostgreSQL 16, Hasura GraphQL, pgAdmin 4 |
+| [🐘 `db-postgresql-basics`](./db-postgresql-basics) | Relational database schema design & patterns | Multi-tenant task manager, DDL/DML, UUID v4, constraints, B-Tree & GIN indexes |
+| [⚡ `db-postgresql-advanced`](./db-postgresql-advanced) | Queries, triggers, procedures & views | INNER/LEFT/FULL JOINs, GROUP BY, JSONB queries, auto-updating triggers, SQL VIEW |
