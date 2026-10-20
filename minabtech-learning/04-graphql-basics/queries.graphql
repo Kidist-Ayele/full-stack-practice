@@ -1,0 +1,11 @@
+fragment UserFields on users {
+  id
+  full_name
+  email
+  created_at
+}
+query GetUser($targetEmail: String!) {
+  users(where: { email: { _eq: $targetEmail } }) {
+    ...UserFields
+  }
+}
