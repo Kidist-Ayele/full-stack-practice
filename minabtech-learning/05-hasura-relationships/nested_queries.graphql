@@ -1,0 +1,24 @@
+# 1. Array Relationship: Authors -> Articles (One-to-Many)
+query GetAuthorsWithArticles {
+  authors {
+    id
+    name
+    articles {
+      id
+      title
+      content
+    }
+  }
+}
+
+# 2. Object Relationship: Articles -> Author (Many-to-One)
+query GetArticlesWithAuthor {
+  articles {
+    id
+    title
+    author {
+      id
+      name
+    }
+  }
+}
