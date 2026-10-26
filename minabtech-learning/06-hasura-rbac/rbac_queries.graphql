@@ -1,0 +1,27 @@
+# 1. Querying as 'user' role with session header:
+#    x-hasura-role: user
+#    x-hasura-user-id: 11111111-1111-1111-1111-111111111111
+# Hasura filters rows automatically: only tasks assigned to this user are returned!
+query UserViewsOwnTasks {
+  tasks {
+    id
+    title
+    status
+    priority
+  }
+}
+
+# 2. Updating own task as 'user' role:
+mutation UserUpdatesOwnTask {
+  update_tasks(
+    where: { id: { _eq: "29449f90-5fee-457d-b7cb-f42c70f82238" } },
+    _set: { status: "done" }
+  ) {
+    affected_rows
+    returning {
+      id
+      title
+      status
+    }
+  }
+}
