@@ -1,0 +1,14 @@
+# Custom Hasura Actions Definitions
+type Mutation {
+  login(email: String!, password: String!): LoginOutput
+  sendNotification(userId: String!, message: String!): NotificationOutput
+}
+
+type LoginOutput {
+  token: String!
+  userId: String!
+}
+
+type NotificationOutput {
+  success: Boolean!
+}
