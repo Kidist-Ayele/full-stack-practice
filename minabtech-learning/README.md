@@ -11,3 +11,4 @@ This repository contains hands-on mini-projects covering the modern backend, dat
 - **[06-hasura-rbac](./06-hasura-rbac)**: Role-Based Access Control, Row-Level Security (RLS), Column-Level Security (CLS), and session variables (`X-Hasura-User-Id`).
 - **[07-hasura-actions-go](./07-hasura-actions-go)**: Extending Hasura with custom business logic, Go HTTP webhook servers, Docker-to-host networking, and synchronous mutations.
 - **[08-go-cli-modular](./08-go-cli-modular)**: Modular Go architecture, domain structs & enums, custom error types (`errors.As`), interface decoupling, thread-safe memory repo, and unit tests.
+- **[09-go-concurrency-workerpool](./09-go-concurrency-workerpool)**: Concurrent worker pools, directional channels, graceful timeout cancellation with `context.WithTimeout`, and `sync.WaitGroup` coordination.
