@@ -12,3 +12,4 @@ This repository contains hands-on mini-projects covering the modern backend, dat
 - **[07-hasura-actions-go](./07-hasura-actions-go)**: Extending Hasura with custom business logic, Go HTTP webhook servers, Docker-to-host networking, and synchronous mutations.
 - **[08-go-cli-modular](./08-go-cli-modular)**: Modular Go architecture, domain structs & enums, custom error types (`errors.As`), interface decoupling, thread-safe memory repo, and unit tests.
 - **[09-go-concurrency-workerpool](./09-go-concurrency-workerpool)**: Concurrent worker pools, directional channels, graceful timeout cancellation with `context.WithTimeout`, and `sync.WaitGroup` coordination.
+- **[10-go-rest-api](./10-go-rest-api)**: Clean REST API in Go 1.22 with standard library `net/http` enhanced routing (`r.PathValue`), layered architecture, CORS, and logging middleware.
